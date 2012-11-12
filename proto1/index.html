@@ -1,0 +1,326 @@
+<html>
+<head>
+	<title>Video Hyper-Links prototype</title>
+		
+	<script type="text/javascript" src="js/jquery-1.7.min.js"></script>
+	<script type="text/javascript" src="js/jquery.window.min.js"></script>
+	<script type="text/javascript" src="js/jquery-ui-1.8.22.min.js"></script>
+	<script type="text/javascript" src="js/froogaloop.js"></script>
+	
+	<link rel="stylesheet" href="css/style.css" type="text/css">
+	<link rel="stylesheet" href="css/jquery.window.css" type="text/css">
+
+	
+	<!--<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>-->
+	
+
+	
+	<style type="text/css">
+
+	
+	</style>
+	<script type="text/javascript">
+	
+	var sourceFiles = ['audio/watchingwords.ogg','audio/herestrouble.ogg','audio/ilikethisstone.ogg'];
+	var channel_max = sourceFiles.length;//50;										// number of channels
+	audiochannels = new Array();
+
+	
+	var iframe,player,stat;
+
+	$(document).ready(function() {
+
+       iframe = $('#player1')[0];
+        console.log(iframe);
+        player = $f(iframe);
+        stat = $('.stat');
+
+        console.log(player);
+        console.log(stat);
+
+// When the player is ready, add listeners for pause, finish, and playProgress
+player.addEvent('ready', function() {
+    stat.text('ready');
+    
+    player.addEvent('pause', onPause);
+    player.addEvent('finish', onFinish);
+    player.addEvent('playProgress', onPlayProgress);
+});
+
+
+	});
+	
+	
+	function openSearchResults() {
+		$.window({
+			showModal: false,
+			content: $("#video-search-result").html(),
+			title: 'Related videos to ...',
+			x: 750,
+			y: 70,
+			width: 400,
+			height: 500,
+			scrollable: false,
+			showFooter: false,
+			maximizable: false,
+			minimizable: false
+			
+		});
+		return false;
+	
+	}
+
+// Call the API when a button is pressed
+$('button').bind('click', function() {
+    player.api($(this).text().toLowerCase());
+});
+
+function onPause(id) {
+    stat.text('paused');
+}
+
+function onFinish(id) {
+    stat.text('finished');
+}
+
+function onPlayProgress(data, id) {
+    stat.text(data.seconds + 's played');
+    	if(Math.round(data.seconds)%10==0 && Math.round(data.seconds)-data.seconds<0.01) {
+		console.log('10 sec');
+		var relateds = $('.ralated-video-list li');
+		//console.log(relateds);
+		$.each(relateds, function(index,value) {
+			//console.log(value);
+			var change = (Math.random() < 0.5 ? -1 : 1) *Math.random()*20;
+			var margin=parseInt($(value).css('margin-left'),10);
+			console.log('margin '+margin+' change '+change);
+			
+			$(value).css('margin-left',margin+change+'px');
+		});
+	}
+}
+	
+	var videoWindowCount = 0;
+	
+
+	function openVideo() {
+		
+		$.window({
+			showModal: false,
+			title: 'video preview',
+			modalOpacity: 0.4,
+			content: $("#video-box").html(),
+			x: 150+videoWindowCount*5,
+			y: 50+videoWindowCount*5,
+			width: 620,
+			height: 500,
+			scrollable: false,
+			showFooter: false,
+			maximizable: false
+		});
+		videoWindowCount++;
+		return false;
+		
+	
+	}
+	
+	
+
+
+	</script>
+</head>
+<body>
+	<div id="container">
+		<div class="main-video-section">
+			<h2>Video Title</h2>
+			<div class="main-video-container">
+				<!--<video width="600" height="400" controls="controls">
+ 					 <source src="videos/red.mp4" type="video/mp4">
+				</video>-->
+				<iframe id="player1" src="http://player.vimeo.com/video/45371204?title=0&portrait=0&byline=0&api=1&player_id=player1" width="600px" height="400px" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>
+				<div type="text" class="stat">no stat</div>
+	<!--			<a href="#"  onclick="openSearchResults();" class="video-feature small-feature" style="top: 150; left: 50;">a feature in the video</a>
+				<a href="#"  onclick="openSearchResults();" class="video-feature small-feature"  style="top: 350; left: 500;">a feature in the video</a>
+-->			</div>
+			<ul class="ralated-video-list">
+				<li style="margin-left: 50px; ">
+					<a href="#" onclick="openVideo()">
+						<span class="prim-info">
+							<div class="rel-thumb"></div>					
+							<span class="rel-title">Related Vid 1</span>
+							<span class="rel-rel">80%</span>					
+						</span>
+						<span class="sec-info">
+							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+						</span>
+					</a>
+				</li>
+				<li style="margin-left: 100px; ">
+					<a href="#" onclick="openVideo()">
+						<span class="prim-info">
+							<div class="rel-thumb"></div>					
+							<span class="rel-title">Related Vid 2</span>
+							<span class="rel-rel">60%</span>					
+							</span>
+						<span class="sec-info">
+							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+						</span>
+					</a>
+				</li>
+				<li style="margin-left: 100px; ">
+					<a href="#" onclick="openVideo()">
+						<span class="prim-info">
+							<div class="rel-thumb"></div>					
+							<span class="rel-title">Related Vid 2.1</span>
+							<span class="rel-rel">60%</span>					
+						</span>
+						<span class="sec-info">
+							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+						</span>
+					</a>
+				</li>
+				<li style="margin-left: 150px; ">
+					<a href="#" onclick="openVideo()">
+						<span class="prim-info">
+							<div class="rel-thumb"></div>					
+							<span class="rel-title">Related Vid 3</span>
+							<span class="rel-rel">45%</span>					
+						</span>
+						<span class="sec-info">
+							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+						</span>
+					</a>
+				</li>
+				<li style="margin-left: 180px; ">
+					<a href="#" onclick="openVideo()">
+						<span class="prim-info">
+							<div class="rel-thumb"></div>					
+							<span class="rel-title">Related Vid 4</span>
+							<span class="rel-rel">40%</span>					
+						</span>
+						<span class="sec-info">
+							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+						</span>
+					</a>
+				</li>
+				<li style="margin-left: 180px; ">
+					<a href="#" onclick="openVideo()">
+						<span class="prim-info">
+							<span class="rel-thumb"></span>					
+							<span class="rel-title">Related Vid 5</span>
+							<span class="rel-rel">40%</span>					
+						</span>
+						<span class="sec-info">
+							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+						</span>
+					</a>
+				</li>
+				
+			</ul>
+			<div class="transcript-section">
+				The <a href="#" onclick="openSearchResults();">transcript</a> of the current section of the video with some keywords <a href="#" onclick="openSearchResults();">highlighted</a>. Clicking on the words brings videos that are most relevant to that word.
+			</div>
+		</div>
+	</div>
+	
+	
+	
+	
+	
+	
+	
+	<div id="video-search-result" style="display: none">
+	
+				<ul class="ralated-video-list">
+				<li style="margin-left: 50px; ">
+					<a href="#" onclick="openVideo()">
+						<span class="prim-info">
+							<div class="rel-thumb"></div>					
+							<span class="rel-title">Related Vid 1</span>
+							<span class="rel-rel">80%</span>					
+						</span>
+						<span class="sec-info">
+							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+						</span>
+					</a>
+				</li>
+				<li style="margin-left: 100px; ">
+					<a href="#" onclick="openVideo()">
+						<span class="prim-info">
+							<div class="rel-thumb"></div>					
+							<span class="rel-title">Related Vid 2</span>
+							<span class="rel-rel">60%</span>					
+							</span>
+						<span class="sec-info">
+							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+						</span>
+					</a>
+				</li>
+				<li style="margin-left: 100px; ">
+					<a href="#" onclick="openVideo()">
+						<span class="prim-info">
+							<div class="rel-thumb"></div>					
+							<span class="rel-title">Related Vid 2.1</span>
+							<span class="rel-rel">60%</span>					
+						</span>
+						<span class="sec-info">
+							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+						</span>
+					</a>
+				</li>
+				<li style="margin-left: 150px; ">
+					<a href="#" onclick="openVideo()">
+						<span class="prim-info">
+							<div class="rel-thumb"></div>					
+							<span class="rel-title">Related Vid 3</span>
+							<span class="rel-rel">45%</span>					
+						</span>
+						<span class="sec-info">
+							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+						</span>
+					</a>
+				</li>
+				<li style="margin-left: 180px; ">
+					<a href="#" onclick="openVideo()">
+						<span class="prim-info">
+							<div class="rel-thumb"></div>					
+							<span class="rel-title">Related Vid 4</span>
+							<span class="rel-rel">40%</span>					
+						</span>
+						<span class="sec-info">
+							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+						</span>
+					</a>
+				</li>
+				<li style="margin-left: 180px; ">
+					<a href="#" onclick="openVideo()">
+						<span class="prim-info">
+							<span class="rel-thumb"></span>					
+							<span class="rel-title">Related Vid 5</span>
+							<span class="rel-rel">40%</span>					
+						</span>
+						<span class="sec-info">
+							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+						</span>
+					</a>
+				</li>
+				
+			</ul>
+	</div>
+	
+	<div id="video-box" style="display: none;">
+			<h2 style="width: 200px;">New Video Title</h2>
+			<div class="main-video-container">
+				<video width="600" height="400" controls="controls">
+ 					 <source src="videos/red.mp4" type="video/mp4">
+				</video>
+			</div>
+			<a href="#" class="reg-link right-btn">open this video in main window</a>
+			<a href="#" class="reg-link right-btn">open this video in a new tab</a>
+	
+	</div>
+	
+	
+
+</body>
+	
