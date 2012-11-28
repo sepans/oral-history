@@ -1,11 +1,32 @@
 <html>
 <head>
-	<title>Video Hyper-Links prototype</title>
+	<title>Video Hyper-Links prototype 1</title>
 		
 	<script type="text/javascript" src="js/jquery-1.7.min.js"></script>
 	<script type="text/javascript" src="js/jquery.window.min.js"></script>
 	<script type="text/javascript" src="js/jquery-ui-1.8.22.min.js"></script>
 	<script type="text/javascript" src="js/froogaloop.js"></script>
+
+	<script type="text/javascript" src="js/jquery.tmpl.js"></script>
+
+	<script type="text/javascript" src="js/data.js"></script>  <!-- to be replaced by data driven data-->
+	
+	
+	<script id="related_video_list_item_template" type="text/x-jquery-tmpl">
+			<li class="related_list_item" style="margin-left: ${margin}">
+			<a href="#" onclick="openVideo()">
+				<span class="prim-info">
+					<div class="rel-thumb"></div>					
+					<span class="rel-title">${name}</span>
+					<span class="rel-rel">${relatedness_percent}%</span>					
+				</span>
+				<span class="sec-info">
+					Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+				</span>
+			</a>
+		</li>	
+	</script>
+
 	
 	<link rel="stylesheet" href="css/style.css" type="text/css">
 	<link rel="stylesheet" href="css/jquery.window.css" type="text/css">
@@ -29,6 +50,8 @@
 	var iframe,player,stat;
 
 	$(document).ready(function() {
+		
+		console.log(videoInfo);
 
        iframe = $('#player1')[0];
         console.log(iframe);
@@ -83,8 +106,53 @@ function onFinish(id) {
     stat.text('finished');
 }
 
+var previousTime = 0;
+var currentTime = 0;
+var INTERVAL = 0.5;
+
+function addRelatedVideoToHtmlList(relatedObject) {
+	
+	console.log(relatedObject);
+	$( "#related_video_list_item_template" ).tmpl( relatedObject )
+        .appendTo( ".ralated-video-list" );
+	console.log($('.ralated-video-list').html());
+		
+		
+
+
+}
+
 function onPlayProgress(data, id) {
-    stat.text(data.seconds + 's played');
+   		stat.text(data.seconds + 's played');
+   		currentTime = data.seconds;
+   		var thisInterval = currentTime-previousTime;
+   		if(thisInterval>INTERVAL) {
+   			var events = videoInfo.events;
+   			
+   		//	for(var event in events) { 
+   			for(var i=0;i<events.length;i++) {
+   				var event = events[i];
+	   			if(currentTime>event.timestamp && previousTime<=event.timestamp) {
+	   				console.log('processing event');
+	   				
+	   				$('.ralated-video-list').html('');  //empty list?
+					
+					for(var j=0;j<event.related_objects.length;j++) {
+						var rel_object = event.related_objects[j];
+						console.log(rel_object);
+						rel_object.margin = rel_object.relatedness * 100;
+						rel_object.relatedness_percent = rel_object.relatedness * 100;
+					
+						addRelatedVideoToHtmlList(rel_object);	   				
+	   				}
+	   				
+	   			}
+	   		}
+	   		previousTime= currentTime;
+   		}
+//   		console.log(previousTime);
+    	
+    /*
     	if(Math.round(data.seconds)%10==0 && Math.round(data.seconds)-data.seconds<0.01) {
 		console.log('10 sec');
 		var relateds = $('.ralated-video-list li');
@@ -98,6 +166,7 @@ function onPlayProgress(data, id) {
 			$(value).css('margin-left',margin+change+'px');
 		});
 	}
+	*/
 }
 	
 	var videoWindowCount = 0;
@@ -143,79 +212,7 @@ function onPlayProgress(data, id) {
 				<a href="#"  onclick="openSearchResults();" class="video-feature small-feature"  style="top: 350; left: 500;">a feature in the video</a>
 -->			</div>
 			<ul class="ralated-video-list">
-				<li style="margin-left: 50px; ">
-					<a href="#" onclick="openVideo()">
-						<span class="prim-info">
-							<div class="rel-thumb"></div>					
-							<span class="rel-title">Related Vid 1</span>
-							<span class="rel-rel">80%</span>					
-						</span>
-						<span class="sec-info">
-							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
-						</span>
-					</a>
-				</li>
-				<li style="margin-left: 100px; ">
-					<a href="#" onclick="openVideo()">
-						<span class="prim-info">
-							<div class="rel-thumb"></div>					
-							<span class="rel-title">Related Vid 2</span>
-							<span class="rel-rel">60%</span>					
-							</span>
-						<span class="sec-info">
-							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
-						</span>
-					</a>
-				</li>
-				<li style="margin-left: 100px; ">
-					<a href="#" onclick="openVideo()">
-						<span class="prim-info">
-							<div class="rel-thumb"></div>					
-							<span class="rel-title">Related Vid 2.1</span>
-							<span class="rel-rel">60%</span>					
-						</span>
-						<span class="sec-info">
-							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
-						</span>
-					</a>
-				</li>
-				<li style="margin-left: 150px; ">
-					<a href="#" onclick="openVideo()">
-						<span class="prim-info">
-							<div class="rel-thumb"></div>					
-							<span class="rel-title">Related Vid 3</span>
-							<span class="rel-rel">45%</span>					
-						</span>
-						<span class="sec-info">
-							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
-						</span>
-					</a>
-				</li>
-				<li style="margin-left: 180px; ">
-					<a href="#" onclick="openVideo()">
-						<span class="prim-info">
-							<div class="rel-thumb"></div>					
-							<span class="rel-title">Related Vid 4</span>
-							<span class="rel-rel">40%</span>					
-						</span>
-						<span class="sec-info">
-							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
-						</span>
-					</a>
-				</li>
-				<li style="margin-left: 180px; ">
-					<a href="#" onclick="openVideo()">
-						<span class="prim-info">
-							<span class="rel-thumb"></span>					
-							<span class="rel-title">Related Vid 5</span>
-							<span class="rel-rel">40%</span>					
-						</span>
-						<span class="sec-info">
-							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
-						</span>
-					</a>
-				</li>
-				
+	
 			</ul>
 			<div class="transcript-section">
 				The <a href="#" onclick="openSearchResults();">transcript</a> of the current section of the video with some keywords <a href="#" onclick="openSearchResults();">highlighted</a>. Clicking on the words brings videos that are most relevant to that word.
@@ -225,7 +222,25 @@ function onPlayProgress(data, id) {
 	
 	
 	
+	<span id="related_template_container" style="display: none;">
 	
+		<li class="related_list_item">
+			<a href="#" onclick="openVideo()">
+				<span class="prim-info">
+					<div class="rel-thumb"></div>					
+					<span class="rel-title">Related Vid 1</span>
+					<span class="rel-rel">80%</span>					
+				</span>
+				<span class="sec-info">
+					Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+				</span>
+			</a>
+		</li>
+
+	
+	
+	
+	</span>
 	
 	
 	
