@@ -13,18 +13,34 @@
 	
 	
 	<script id="related_video_list_item_template" type="text/x-jquery-tmpl">
-			<li class="related_list_item" style="margin-left: ${margin}">
-			<a href="#" onclick="openVideo()">
+			<li class="related_list_item" id="video_${id}"  >
+			<a href="#" onclick="openVideo('${id}')">
 				<span class="prim-info">
 					<div class="rel-thumb"></div>					
-					<span class="rel-title">${name}</span>
-					<span class="rel-rel">${relatedness_percent}%</span>					
+					<span class="rel-title">${title}</span>
 				</span>
 				<span class="sec-info">
 					Some highlight of the transcript or word cloud of the related video or keywords which both videos share
 				</span>
+				<span class="rel-rel">${relatedness_percent}%</span>					
+				<span class="rel_bar" style="width: 0;"></span>
 			</a>
 		</li>	
+	</script>
+
+
+	<script id="video_box_template" type="text/x-jquery-tmpl">
+		<div id="video-box" style="display: none;">
+				<h2 style="width: 200px;">${title}</h2>
+				<div class="main-video-container">
+					<video width="600" height="400" controls="controls">
+						 <source src="${url}" type="video/mp4">
+					</video>
+				</div>
+				<a href="#" class="reg-link right-btn">open this video in main window</a>
+				<a href="#" class="reg-link right-btn">open this video in a new tab</a>
+		
+		</div>
 	</script>
 
 	
@@ -41,11 +57,11 @@
 	
 	</style>
 	<script type="text/javascript">
-	
+	/*
 	var sourceFiles = ['audio/watchingwords.ogg','audio/herestrouble.ogg','audio/ilikethisstone.ogg'];
 	var channel_max = sourceFiles.length;//50;										// number of channels
 	audiochannels = new Array();
-
+*/
 	
 	var iframe,player,stat;
 
@@ -62,14 +78,14 @@
         console.log(stat);
 
 // When the player is ready, add listeners for pause, finish, and playProgress
-player.addEvent('ready', function() {
-    stat.text('ready');
-    
-    player.addEvent('pause', onPause);
-    player.addEvent('finish', onFinish);
-    player.addEvent('playProgress', onPlayProgress);
-});
-
+		player.addEvent('ready', function() {
+			stat.text('ready');
+			
+			player.addEvent('pause', onPause);
+			player.addEvent('finish', onFinish);
+			player.addEvent('playProgress', onPlayProgress);
+		});
+		
 
 	});
 	
@@ -108,14 +124,14 @@ function onFinish(id) {
 
 var previousTime = 0;
 var currentTime = 0;
-var INTERVAL = 0.5;
+var INTERVAL = 1;  //seconds
 
 function addRelatedVideoToHtmlList(relatedObject) {
 	
-	console.log(relatedObject);
+	//console.log(relatedObject);
 	$( "#related_video_list_item_template" ).tmpl( relatedObject )
         .appendTo( ".ralated-video-list" );
-	console.log($('.ralated-video-list').html());
+	//console.log($('.ralated-video-list').html());
 		
 		
 
@@ -127,23 +143,55 @@ function onPlayProgress(data, id) {
    		currentTime = data.seconds;
    		var thisInterval = currentTime-previousTime;
    		if(thisInterval>INTERVAL) {
-   			var events = videoInfo.events;
+   			var events = videoInfo['vid2'].events;
    			
    		//	for(var event in events) { 
    			for(var i=0;i<events.length;i++) {
    				var event = events[i];
-	   			if(currentTime>event.timestamp && previousTime<=event.timestamp) {
-	   				console.log('processing event');
+   				var timestamp = Math.round(event.timestamp);
+	   			if(previousTime<=timestamp && timestamp<currentTime) {
+	   				//console.log('processing event cur '+currentTime+' timestamp '+ event.timestamp+' prev '+previousTime);
 	   				
-	   				$('.ralated-video-list').html('');  //empty list?
+	   				//$('.ralated-video-list').html('');  //empty list?
 					
 					for(var j=0;j<event.related_objects.length;j++) {
 						var rel_object = event.related_objects[j];
-						console.log(rel_object);
-						rel_object.margin = rel_object.relatedness * 100;
+						console.log(rel_object.id);
+						var listId= 'video_'+rel_object.id;
+						var listElement = $('.ralated-video-list #'+listId);
+						
+						var listWidth =$('.ralated-video-list').width();
+
+						rel_object.width = rel_object.relatedness*listWidth ;
 						rel_object.relatedness_percent = rel_object.relatedness * 100;
+						
+						rel_object.title = videoInfo[rel_object.id].title;
+
+						if(listElement.length==0) {
+							addRelatedVideoToHtmlList(rel_object);	   				
+						}
+						
+						
+						if( rel_object.relatedness==0) {
+							console.log('removing');
+//							setTimeout(function() {removeElement(listElement);} , 500);
+							$('.ralated-video-list #'+listId+' .rel_bar').animate({'width':rel_object.width}, 500, function() {
+										
+										var listItem = $(this).parents('.related_list_item');
+										listItem.remove();
+										//console.log(element);
+
+							});
+
+							
+						}
+						else {
+							$('.ralated-video-list #'+listId+' .rel_bar').animate({'width':rel_object.width});
+
+						}
+						$('.ralated-video-list #'+listId+' .rel-rel').animate({'left':rel_object.width-12});
+						
 					
-						addRelatedVideoToHtmlList(rel_object);	   				
 	   				}
 	   				
 	   			}
@@ -171,8 +219,50 @@ function onPlayProgress(data, id) {
 	
 	var videoWindowCount = 0;
 	
+	function removeElement(element) {
+		console.log(element);
+		console.log('remove');
+		element.remove();
+		console.log(element);
+	}
+	
+	var vimeo_params = '?title=0&portrait=0&byline=0&api=1&player_id=player1';
 
-	function openVideo() {
+	function openVideo(id) {
+	
+		console.log(id);
+		var info =videoInfo[id];
+		console.log(info);
+	
+		$('#player1').attr('src',info.vimeo_url+vimeo_params);
+		
+		iframe = $('#player1')[0];
+        console.log(iframe);
+        player = $f(iframe);
+        
+        $('.ralated-video-list').html('');
+        
+        previousTime = 0;
+		currentTime = 0;
+		
+		$('#video_title').text(info.title);
+
+        
+     //   console.log(player);
+      /*  
+       player.addEvent('ready', function() {
+			stat.text('ready');
+			
+			player.addEvent('pause', onPause);
+			player.addEvent('finish', onFinish);
+			player.addEvent('playProgress', onPlayProgress);
+		});
+
+*/
+		// for opening in new window
+		/*
+		var content = $( "#video_box_template" ).tmpl( info );
+		console.log(content);
 		
 		$.window({
 			showModal: false,
@@ -188,7 +278,11 @@ function onPlayProgress(data, id) {
 			maximizable: false
 		});
 		videoWindowCount++;
+		
+		*/
+		
 		return false;
+		
 		
 	
 	}
@@ -201,7 +295,7 @@ function onPlayProgress(data, id) {
 <body>
 	<div id="container">
 		<div class="main-video-section">
-			<h2>Video Title</h2>
+			<h2 id="video_title">Jean-Daniel Nicoud</h2>
 			<div class="main-video-container">
 				<!--<video width="600" height="400" controls="controls">
  					 <source src="videos/red.mp4" type="video/mp4">
@@ -323,17 +417,7 @@ function onPlayProgress(data, id) {
 			</ul>
 	</div>
 	
-	<div id="video-box" style="display: none;">
-			<h2 style="width: 200px;">New Video Title</h2>
-			<div class="main-video-container">
-				<video width="600" height="400" controls="controls">
- 					 <source src="videos/red.mp4" type="video/mp4">
-				</video>
-			</div>
-			<a href="#" class="reg-link right-btn">open this video in main window</a>
-			<a href="#" class="reg-link right-btn">open this video in a new tab</a>
-	
-	</div>
+
 	
 	
 
