@@ -16,11 +16,11 @@
 			<li class="related_list_item" id="video_${id}"  >
 			<a href="#" onclick="openVideo('${id}')">
 				<span class="prim-info">
-					<div class="rel-thumb"></div>					
+					<img class='rel-thumb' src='${thumbnail}'>					
 					<span class="rel-title">${title}</span>
 				</span>
 				<span class="sec-info">
-					Some highlight of the transcript or word cloud of the related video or keywords which both videos share
+					 Some highlight of the transcript or word cloud of the related video or keywords which both videos share
 				</span>
 				<span class="rel-rel">${relatedness_percent}%</span>					
 				<span class="rel_bar" style="width: 0;"></span>
@@ -64,6 +64,9 @@
 */
 	
 	var iframe,player,stat;
+	
+	var history = [];
+	var step = 0;
 
 	$(document).ready(function() {
 		
@@ -76,9 +79,15 @@
 
         console.log(player);
         console.log(stat);
+        
+        history[step]={'step':step,'id':'vid1','title':'Jean-Daniel Nicoud', 'vimeo_url':'http://player.vimeo.com/video/45371204'};
+        step++;
+        
+        console.log(history);
 
 // When the player is ready, add listeners for pause, finish, and playProgress
 		player.addEvent('ready', function() {
+			console.log('player ready');
 			stat.text('ready');
 			
 			player.addEvent('pause', onPause);
@@ -167,15 +176,17 @@ function onPlayProgress(data, id) {
 						
 						rel_object.title = videoInfo[rel_object.id].title;
 
+						rel_object.thumbnail = videoInfo[rel_object.id].thumbnail;
+
 						if(listElement.length==0) {
 							addRelatedVideoToHtmlList(rel_object);	   				
 						}
 						
 						
 						if( rel_object.relatedness==0) {
-							console.log('removing');
+							//console.log('removing');
 //							setTimeout(function() {removeElement(listElement);} , 500);
-							$('.ralated-video-list #'+listId+' .rel_bar').animate({'width':rel_object.width}, 500, function() {
+							$('.ralated-video-list #'+listId+' .rel_bar').animate({'opacity':0}, 1000, function() {
 										
 										var listItem = $(this).parents('.related_list_item');
 										listItem.remove();
@@ -186,10 +197,12 @@ function onPlayProgress(data, id) {
 							
 						}
 						else {
-							$('.ralated-video-list #'+listId+' .rel_bar').animate({'width':rel_object.width});
 
 						}
+						$('.ralated-video-list #'+listId+' .rel_bar').animate({'width':rel_object.width});
+						
 						$('.ralated-video-list #'+listId+' .rel-rel').animate({'left':rel_object.width-12});
+						$('.ralated-video-list #'+listId+' .rel-rel').text(rel_object.relatedness_percent+'%');
 						
 					
 	   				}
@@ -234,18 +247,18 @@ function onPlayProgress(data, id) {
 		var info =videoInfo[id];
 		console.log(info);
 	
-		$('#player1').attr('src',info.vimeo_url+vimeo_params);
-		
-		iframe = $('#player1')[0];
-        console.log(iframe);
-        player = $f(iframe);
+		switchToVideo(info.title,info.vimeo_url+vimeo_params);
         
-        $('.ralated-video-list').html('');
+        history[step-1].last_time=currentTime;        
+        history[step]={'step':step,'id':info.id,'title': info.title,'vimeo_url':info.vimeo_url};
+        step++;
+
+        $('.navigation a.prev').css('color','#000');
+        $('.navigation a.prev').css('cursor','auto');
         
-        previousTime = 0;
-		currentTime = 0;
-		
-		$('#video_title').text(info.title);
+        console.log(history);
+
+        
 
         
      //   console.log(player);
@@ -287,6 +300,57 @@ function onPlayProgress(data, id) {
 	
 	}
 	
+	function switchToVideo(title, vimeo_url) {
+	
+		console.log('title '+title);
+		$('#player1').attr('src',vimeo_url);
+		
+		iframe = $('#player1')[0];
+        player = $f(iframe);
+
+        $('.ralated-video-list').html('');
+        
+        previousTime = 0;
+		currentTime = 0;
+		
+		$('#video_title').text(title);
+
+	}
+	
+	function prevVideo() {
+		console.log(history);
+		if(history.length>1 && step>1) {
+			history[step-1].last_time=currentTime; 
+			step--;  
+			
+			console.log(history[step-1]);
+			
+			switchToVideo(history[step-1].title,history[step-1].vimeo_url);  
+
+			player.api('play');			
+			player.api('seekTo', history[step-1].last_time);
+			//player.seekto(history[step-1].last_time);   
+			
+			if(step==1) {
+					$('.navigation a.prev').css('color','#BBB');
+			        $('.navigation a.prev').css('cursor','default');
+			}
+
+			
+
+		}
+		return false;
+	
+	}
+	
+	function nextVideo() {
+		if(step>history.length) {
+		
+		}
+		return false;
+	
+	}
+	
 	
 
 
@@ -296,6 +360,9 @@ function onPlayProgress(data, id) {
 	<div id="container">
 		<div class="main-video-section">
 			<h2 id="video_title">Jean-Daniel Nicoud</h2>
+			<div class="navigation"><a class="prev" href="#" onclick="prevVideo()"> < </a>
+									<a class="next" href="#" onclick="nextVideo()"> > </a>
+			</div>
 			<div class="main-video-container">
 				<!--<video width="600" height="400" controls="controls">
  					 <source src="videos/red.mp4" type="video/mp4">
@@ -353,66 +420,7 @@ function onPlayProgress(data, id) {
 						</span>
 					</a>
 				</li>
-				<li style="margin-left: 100px; ">
-					<a href="#" onclick="openVideo()">
-						<span class="prim-info">
-							<div class="rel-thumb"></div>					
-							<span class="rel-title">Related Vid 2</span>
-							<span class="rel-rel">60%</span>					
-							</span>
-						<span class="sec-info">
-							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
-						</span>
-					</a>
-				</li>
-				<li style="margin-left: 100px; ">
-					<a href="#" onclick="openVideo()">
-						<span class="prim-info">
-							<div class="rel-thumb"></div>					
-							<span class="rel-title">Related Vid 2.1</span>
-							<span class="rel-rel">60%</span>					
-						</span>
-						<span class="sec-info">
-							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
-						</span>
-					</a>
-				</li>
-				<li style="margin-left: 150px; ">
-					<a href="#" onclick="openVideo()">
-						<span class="prim-info">
-							<div class="rel-thumb"></div>					
-							<span class="rel-title">Related Vid 3</span>
-							<span class="rel-rel">45%</span>					
-						</span>
-						<span class="sec-info">
-							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
-						</span>
-					</a>
-				</li>
-				<li style="margin-left: 180px; ">
-					<a href="#" onclick="openVideo()">
-						<span class="prim-info">
-							<div class="rel-thumb"></div>					
-							<span class="rel-title">Related Vid 4</span>
-							<span class="rel-rel">40%</span>					
-						</span>
-						<span class="sec-info">
-							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
-						</span>
-					</a>
-				</li>
-				<li style="margin-left: 180px; ">
-					<a href="#" onclick="openVideo()">
-						<span class="prim-info">
-							<span class="rel-thumb"></span>					
-							<span class="rel-title">Related Vid 5</span>
-							<span class="rel-rel">40%</span>					
-						</span>
-						<span class="sec-info">
-							Some highlight of the transcript or word cloud of the related video or keywords which both videos share
-						</span>
-					</a>
-				</li>
+			
 				
 			</ul>
 	</div>
