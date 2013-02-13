@@ -1,6 +1,6 @@
 <html>
 <head>
-	<title>Video Hyper-Links prototype 1</title>
+	<title>Video Hyper-Links prototype 2</title>
 		
 	<script type="text/javascript" src="js/jquery-1.7.min.js"></script>
 	<script type="text/javascript" src="js/jquery.window.min.js"></script>
@@ -14,7 +14,7 @@
 	
 	<script id="related_video_list_item_template" type="text/x-jquery-tmpl">
 			<li class="related_list_item" id="video_${id}"  >
-			<a href="#" onclick="openVideo('${id}')">
+			<a href="#" onclick="openVideo('${id}',${seek_point})">
 				<span class="prim-info">
 					<img class='rel-thumb' src='${thumbnail}'>					
 					<span class="rel-title">${title}</span>
@@ -57,20 +57,38 @@
 	
 	</style>
 	<script type="text/javascript">
-	/*
-	var sourceFiles = ['audio/watchingwords.ogg','audio/herestrouble.ogg','audio/ilikethisstone.ogg'];
-	var channel_max = sourceFiles.length;//50;										// number of channels
-	audiochannels = new Array();
-*/
+
+    //var currentlyPlayingId; using history is enough?
 	
 	var iframe,player,stat;
 	
 	var history = [];
 	var step = 0;
+	
+	var pendingSeektoTime = 0;
+
+ 
+ 
+ window.navigator.sayswho= (function(){
+  var N= window.navigator.appName, ua= window.navigator.userAgent, tem;
+  var M= ua.match(/(opera|chrome|safari|firefox|msie)\/?\s*(\.?\d+(\.\d+)*)/i);
+  if(M && (tem= ua.match(/version\/([\.\d]+)/i))!= null) M[2]= tem[1];
+  M= M? [M[1], M[2]]: [N, window.navigator.appVersion,'-?'];
+  return M;
+ })();
+ 
+ 
+// alert('saywho '+window.navigator.sayswho[0]);
+ 
 
 	$(document).ready(function() {
 		
 		console.log(videoInfo);
+		
+		//currentlyPlayingId = 'vid1';
+		$('#iframe-container').html('<iframe id="player1" src="http://player.vimeo.com/video/45371204?title=0&portrait=0&byline=0&color=FFA200&api=1&player_id=player1" width="600px" height="400px" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>');
+        history[step]={'step':step,'id':'vid1','title':'Jean-Daniel Nicoud', 'vimeo_url':'http://player.vimeo.com/video/45371204'};
+        step++;
 
        iframe = $('#player1')[0];
         console.log(iframe);
@@ -80,8 +98,6 @@
         console.log(player);
         console.log(stat);
         
-        history[step]={'step':step,'id':'vid1','title':'Jean-Daniel Nicoud', 'vimeo_url':'http://player.vimeo.com/video/45371204'};
-        step++;
         
         console.log(history);
 
@@ -92,7 +108,14 @@
 			
 			player.addEvent('pause', onPause);
 			player.addEvent('finish', onFinish);
+			player.addEvent("seek",onSeek);
 			player.addEvent('playProgress', onPlayProgress);
+			
+			console.log('pendingSeektoTime '+pendingSeektoTime);
+			if(pendingSeektoTime!=0) {
+			    player.api('seekTo',pendingSeektoTime);
+			    pendingSeektoTime = 0;
+			}
 		});
 		
 
@@ -124,11 +147,11 @@ $('button').bind('click', function() {
 });
 
 function onPause(id) {
-    stat.text('paused');
+  //  stat.text('paused');
 }
 
 function onFinish(id) {
-    stat.text('finished');
+   // stat.text('finished');
 }
 
 var previousTime = 0;
@@ -147,14 +170,43 @@ function addRelatedVideoToHtmlList(relatedObject) {
 
 }
 
+function onSeek(timeInfo, id) {
+
+    console.log('on seek');
+
+    var currentId = history[step-1].id;
+    var events = videoInfo[currentId].events;
+
+    console.log(timeInfo);
+    console.log(currentId);
+    
+    processEvents(events,timeInfo.seconds, previousTime,false);
+
+    
+    
+}
+
 function onPlayProgress(data, id) {
    		stat.text(data.seconds + 's played');
    		currentTime = data.seconds;
    		var thisInterval = currentTime-previousTime;
    		if(thisInterval>INTERVAL) {
-   			var events = videoInfo['vid2'].events;
+   		    var currentId = history[step-1].id;
+   			var events = videoInfo[currentId].events;
    			
    		//	for(var event in events) { 
+   		
+   		    processEvents(events,currentTime, previousTime,true);
+   		    
+	   		previousTime= currentTime;
+   		}
+//   		console.log(previousTime);
+    	
+    
+}
+
+function processEvents(events,currentTime, previousTime, animate) {
+
    			for(var i=0;i<events.length;i++) {
    				var event = events[i];
    				var timestamp = Math.round(event.timestamp);
@@ -165,7 +217,7 @@ function onPlayProgress(data, id) {
 					
 					for(var j=0;j<event.related_objects.length;j++) {
 						var rel_object = event.related_objects[j];
-						console.log(rel_object.id);
+						//console.log(rel_object.id);
 						var listId= 'video_'+rel_object.id;
 						var listElement = $('.ralated-video-list #'+listId);
 						
@@ -184,24 +236,39 @@ function onPlayProgress(data, id) {
 						
 						
 						if( rel_object.relatedness==0) {
-							//console.log('removing');
+							console.log('removing');
 //							setTimeout(function() {removeElement(listElement);} , 500);
-							$('.ralated-video-list #'+listId+' .rel_bar').animate({'opacity':0}, 1000, function() {
-										
-										var listItem = $(this).parents('.related_list_item');
-										listItem.remove();
-										//console.log(element);
-
-							});
-
+                            if(animate) {
+                                
+                                $('.ralated-video-list #'+listId+' .rel_bar').animate({'opacity':0}, 1000, function() {
+                                            
+                                            var listItem = $(this).parents('.related_list_item');
+                                            listItem.remove();
+                                            //console.log(element);
+    
+                                });
+                            }
+                            else {
+                                if(listItem!=undefined) {
+                                    listItem.remove();
+                                }
+                            
+                            }
 							
 						}
 						else {
 
 						}
-						$('.ralated-video-list #'+listId+' .rel_bar').animate({'width':rel_object.width});
-						
-						$('.ralated-video-list #'+listId+' .rel-rel').animate({'left':rel_object.width-12});
+						if(animate) {
+    						$('.ralated-video-list #'+listId+' .rel_bar').animate({'width':rel_object.width});
+	    					$('.ralated-video-list #'+listId+' .rel-rel').animate({'left':rel_object.width-12});
+	    				}
+	    				else {
+	    				
+    						$('.ralated-video-list #'+listId+' .rel_bar').css('width',rel_object.width);
+	    					$('.ralated-video-list #'+listId+' .rel-rel').css('left',rel_object.width-12);
+	    				
+	    				}
 						$('.ralated-video-list #'+listId+' .rel-rel').text(rel_object.relatedness_percent+'%');
 						
 					
@@ -209,25 +276,6 @@ function onPlayProgress(data, id) {
 	   				
 	   			}
 	   		}
-	   		previousTime= currentTime;
-   		}
-//   		console.log(previousTime);
-    	
-    /*
-    	if(Math.round(data.seconds)%10==0 && Math.round(data.seconds)-data.seconds<0.01) {
-		console.log('10 sec');
-		var relateds = $('.ralated-video-list li');
-		//console.log(relateds);
-		$.each(relateds, function(index,value) {
-			//console.log(value);
-			var change = (Math.random() < 0.5 ? -1 : 1) *Math.random()*20;
-			var margin=parseInt($(value).css('margin-left'),10);
-			console.log('margin '+margin+' change '+change);
-			
-			$(value).css('margin-left',margin+change+'px');
-		});
-	}
-	*/
 }
 	
 	var videoWindowCount = 0;
@@ -239,39 +287,42 @@ function onPlayProgress(data, id) {
 		console.log(element);
 	}
 	
-	var vimeo_params = '?title=0&portrait=0&byline=0&api=1&player_id=player1';
+	var vimeo_params = '?title=0&portrait=0&byline=0&color=FFA200&api=1&player_id=player1';
 
-	function openVideo(id) {
+	function openVideo(id,seek_point) {
 	
 		console.log(id);
 		var info =videoInfo[id];
 		console.log(info);
 	
-		switchToVideo(info.title,info.vimeo_url+vimeo_params);
         
-        history[step-1].last_time=currentTime;        
+        history[step-1].last_time=currentTime; 
+        console.log(currentTime);    
+        console.log(history);   
         history[step]={'step':step,'id':info.id,'title': info.title,'vimeo_url':info.vimeo_url};
         step++;
 
-        $('.navigation a.prev').css('color','#000');
-        $('.navigation a.prev').css('cursor','auto');
+     //   $('.navigation a.prev').css('color','#000');
+     //   $('.navigation a.prev').css('cursor','auto');
+        $('.navigation a.prev').addClass('active');
         
         console.log(history);
 
+		switchToVideo(info.title,info.vimeo_url+vimeo_params);
+		
+		console.log('seek_point '+seek_point);
+		if(seek_point!=0) {
+		    pendingSeektoTime = seek_point;
+		}
+		
         
 
         
      //   console.log(player);
-      /*  
-       player.addEvent('ready', function() {
-			stat.text('ready');
-			
-			player.addEvent('pause', onPause);
-			player.addEvent('finish', onFinish);
-			player.addEvent('playProgress', onPlayProgress);
-		});
+        
 
-*/
+
+
 		// for opening in new window
 		/*
 		var content = $( "#video_box_template" ).tmpl( info );
@@ -302,12 +353,36 @@ function onPlayProgress(data, id) {
 	
 	function switchToVideo(title, vimeo_url) {
 	
-		console.log('title '+title);
-		$('#player1').attr('src',vimeo_url);
+    	console.log('title '+title);
+
+	    if(window.navigator.sayswho[0]=='Firefox') {   // firefox needs this to restart flash and do player initialization // or maybe not?!
+	    
+		    $('#player1').attr('src',vimeo_url);
+	    // $('#iframe-container').html('<iframe id="player1" src="'+vimeo_url+'?title=0&portrait=0&byline=0&color=FFA200&api=1&player_id=player1" width="600px" height="400px" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>');
+        }
+        else if(window.navigator.sayswho[0]=='Chrome') {  // chrome works with HTML5 and has a bug when redoing iframe
+	
+		    $('#player1').attr('src',vimeo_url);
+		
+		}
 		
 		iframe = $('#player1')[0];
         player = $f(iframe);
-
+        
+        // needed? 
+       
+        /*
+        console.log(player);
+        
+        player.addEvent('ready', function() {
+			stat.text('ready');
+			
+			player.addEvent('pause', onPause);
+			player.addEvent('finish', onFinish);
+			player.addEvent('playProgress', onPlayProgress);
+		});
+        */
+        
         $('.ralated-video-list').html('');
         
         previousTime = 0;
@@ -327,13 +402,31 @@ function onPlayProgress(data, id) {
 			
 			switchToVideo(history[step-1].title,history[step-1].vimeo_url);  
 
-			player.api('play');			
-			player.api('seekTo', history[step-1].last_time);
-			//player.seekto(history[step-1].last_time);   
+           // console.log('before settimeout');
+         
+            pendingSeektoTime = history[step-1].last_time;
+            
+            var events = videoInfo[history[step-1].id].events;
+
+    			
+    		processEvents(events,history[step-1].last_time, 0,false);
+			
+			/*setTimeout(function() {
+			    console.log('seeking to '+history[step-1].last_time);
+			    player.api('seekTo', history[step-1].last_time);
+    			
+    			
+    			var events = videoInfo[history[step-1].id].events;
+
+    			
+    		//	processEvents(events,history[step-1].last_time, 0);
+    					
+			},3000);*/
 			
 			if(step==1) {
-					$('.navigation a.prev').css('color','#BBB');
-			        $('.navigation a.prev').css('cursor','default');
+			//		$('.navigation a.prev').css('color','#BBB');
+			 //       $('.navigation a.prev').css('cursor','default');
+			    $('.navigation a.prev').removeClass('active');
 			}
 
 			
@@ -368,7 +461,9 @@ function onPlayProgress(data, id) {
 				<!--<video width="600" height="400" controls="controls">
  					 <source src="videos/red.mp4" type="video/mp4">
 				</video>-->
-				<iframe id="player1" src="http://player.vimeo.com/video/45371204?title=0&portrait=0&byline=0&api=1&player_id=player1" width="600px" height="400px" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>
+				<div id="iframe-container">
+				    <!--<iframe id="player1" src="http://player.vimeo.com/video/45371204?title=0&portrait=0&byline=0&api=1&player_id=player1" width="600px" height="400px" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>-->
+				</div>
 				<div type="text" class="stat">no stat</div>
 	<!--			<a href="#"  onclick="openSearchResults();" class="video-feature small-feature" style="top: 150; left: 50;">a feature in the video</a>
 				<a href="#"  onclick="openSearchResults();" class="video-feature small-feature"  style="top: 350; left: 500;">a feature in the video</a>
@@ -383,7 +478,7 @@ function onPlayProgress(data, id) {
 	</div>
 	
 	
-	
+	<!--
 	<span id="related_template_container" style="display: none;">
 	
 		<li class="related_list_item">
@@ -426,7 +521,7 @@ function onPlayProgress(data, id) {
 			</ul>
 	</div>
 	
-
+-->
 	
 	
 

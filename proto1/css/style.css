@@ -49,5 +49,8 @@
 		.navigation { position: absolute; top: 55px; left: 540px; font-size: 30px;}
 		.navigation a { padding-right: 30px; color: #BBB; cursor: default;}
 
+		.navigation a.active {  color: #000; cursor: pointer; }
+		
+
 
 		.a .c .g { display: none;}
