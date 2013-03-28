@@ -44,9 +44,11 @@
 	</script>
 
 	
-	<link rel="stylesheet" href="css/style.css" type="text/css">
 	<link rel="stylesheet" href="css/jquery.window.css" type="text/css">
 
+	<link rel="stylesheet" href="css/ui-lightness/jquery-ui-1.8.22.custom.css" type="text/css">
+
+	<link rel="stylesheet" href="css/style.css" type="text/css">
 	
 	<!--<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>-->
 	
@@ -66,6 +68,10 @@
 	var step = 0;
 	
 	var pendingSeektoTime = 0;
+	
+	var playTime=0;
+	
+	
 
  
  
@@ -84,6 +90,9 @@
 	$(document).ready(function() {
 		
 		console.log(videoInfo);
+		
+		
+		$('.stat-bar').progressbar({value: false,max:100});
 		
 		//currentlyPlayingId = 'vid1';
 		$('#iframe-container').html('<iframe id="player1" src="http://player.vimeo.com/video/45371204?title=0&portrait=0&byline=0&color=FFA200&api=1&player_id=player1" width="600px" height="400px" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>');
@@ -111,11 +120,33 @@
 			player.addEvent("seek",onSeek);
 			player.addEvent('playProgress', onPlayProgress);
 			
-			console.log('pendingSeektoTime '+pendingSeektoTime);
+			console.log('seek? '+pendingSeektoTime);
 			if(pendingSeektoTime!=0) {
+			    console.log('seeking '+pendingSeektoTime);
 			    player.api('seekTo',pendingSeektoTime);
 			    pendingSeektoTime = 0;
 			}
+			
+			
+			var currentId = history[step-1].id;
+   			var events = videoInfo[currentId].events;
+   			for(var i=0;i<events.length;i++ ) {
+   			    var event = events[i];
+   			    console.log(event);
+   			    console.log(event.timestamp);
+   			    
+   			    
+   			    var left = i*i*20;
+   			    var eventHtml = '<div id="event-'+event.id+'" class="event" style="left:'+left+'"></div>';
+   			    $('.stat-bar').append(eventHtml);
+   			}
+   			
+   			
+			
+			
+			
+			
+			
 		});
 		
 
@@ -123,12 +154,13 @@
 	
 	
 	function openSearchResults() {
+	    
 		$.window({
 			showModal: false,
-			content: $("#video-search-result").html(),
+			content: "<div></div>",
 			title: 'Related videos to ...',
-			x: 750,
-			y: 70,
+			x: 780,
+			y: 105,
 			width: 400,
 			height: 500,
 			scrollable: false,
@@ -180,17 +212,41 @@ function onSeek(timeInfo, id) {
     console.log(timeInfo);
     console.log(currentId);
     
+    var progress = timeInfo.percent*100;
+           
+    $('.stat-bar').progressbar( "option", { value: progress });
+
+    
     processEvents(events,timeInfo.seconds, previousTime,false);
+    
+    playTime = parseFloat(timeInfo.seconds);
 
     
     
 }
+function toMinAndSec(secs,decimal) {
+  return Math.floor(parseFloat(secs)/60)+'m '+ ((parseFloat(secs)%60).toFixed(decimal))+ 's';
+}
 
 function onPlayProgress(data, id) {
-   		stat.text(data.seconds + 's played');
+   		stat.text(toMinAndSec(data.seconds,1));
    		currentTime = data.seconds;
+   		//console.log(data);
+   		
+   		playTime = parseFloat(data.seconds);
+   		
+   		
    		var thisInterval = currentTime-previousTime;
    		if(thisInterval>INTERVAL) {
+
+          
+            
+            
+            var progress = data.percent*100;
+           
+            $('.stat-bar').progressbar( "option", { value: progress });
+
+
    		    var currentId = history[step-1].id;
    			var events = videoInfo[currentId].events;
    			
@@ -369,6 +425,15 @@ function processEvents(events,currentTime, previousTime, animate) {
 		iframe = $('#player1')[0];
         player = $f(iframe);
         
+        // this is also done in ready function but when back button is clicked the player may not get initialized in html5 player?      
+        console.log('switch seek? '+pendingSeektoTime);
+		if(pendingSeektoTime!=0) {
+			    console.log('seeking '+pendingSeektoTime);
+			    player.api('seekTo',pendingSeektoTime);
+			    pendingSeektoTime = 0;
+		}
+
+        
         // needed? 
        
         /*
@@ -400,28 +465,19 @@ function processEvents(events,currentTime, previousTime, animate) {
 			
 			console.log(history[step-1]);
 			
+            pendingSeektoTime = history[step-1].last_time;
+
 			switchToVideo(history[step-1].title,history[step-1].vimeo_url);  
 
            // console.log('before settimeout');
          
-            pendingSeektoTime = history[step-1].last_time;
             
             var events = videoInfo[history[step-1].id].events;
 
     			
     		processEvents(events,history[step-1].last_time, 0,false);
 			
-			/*setTimeout(function() {
-			    console.log('seeking to '+history[step-1].last_time);
-			    player.api('seekTo', history[step-1].last_time);
-    			
-    			
-    			var events = videoInfo[history[step-1].id].events;
-
-    			
-    		//	processEvents(events,history[step-1].last_time, 0);
-    					
-			},3000);*/
+		
 			
 			if(step==1) {
 			//		$('.navigation a.prev').css('color','#BBB');
@@ -444,6 +500,29 @@ function processEvents(events,currentTime, previousTime, animate) {
 	
 	}
 	
+	function forwardRewind(seconds) {
+	    console.log(playTime);
+	    console.log(seconds);
+	    console.log(playTime+seconds);
+	
+		player.api('seekTo',playTime+seconds);
+
+	
+	}
+	
+	function create_event() {
+	
+	    $('.create-controls').slideToggle();
+	     $('.create-controls #start-time').val(playTime);
+	
+	}
+	
+	function captureTime(position) {
+	
+	    $(position).val(playTime);
+	}
+	
+	
 	
 
 
@@ -458,22 +537,61 @@ function processEvents(events,currentTime, previousTime, animate) {
 									<a class="next" href="#" onclick="nextVideo()"> > </a>
 			</div>
 			<div class="main-video-container">
-				<!--<video width="600" height="400" controls="controls">
- 					 <source src="videos/red.mp4" type="video/mp4">
-				</video>-->
 				<div id="iframe-container">
-				    <!--<iframe id="player1" src="http://player.vimeo.com/video/45371204?title=0&portrait=0&byline=0&api=1&player_id=player1" width="600px" height="400px" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>-->
+				   
 				</div>
-				<div type="text" class="stat">no stat</div>
-	<!--			<a href="#"  onclick="openSearchResults();" class="video-feature small-feature" style="top: 150; left: 50;">a feature in the video</a>
-				<a href="#"  onclick="openSearchResults();" class="video-feature small-feature"  style="top: 350; left: 500;">a feature in the video</a>
--->			</div>
-			<ul class="ralated-video-list">
-	
-			</ul>
-			<div class="transcript-section">
-				The <a href="#" onclick="openSearchResults();">transcript</a> of the current section of the video with some keywords <a href="#" onclick="openSearchResults();">highlighted</a>. Clicking on the words brings videos that are most relevant to that word.
-			</div>
+                <ul class="ralated-video-list">
+
+
+        
+                </ul>
+                <div id="edit-controls">
+                    <div class="stat-bar">
+                            <div type="text" class="stat">no stat</div>
+                    </div>
+                    <button type="button" class="sm-button back-30" onclick="forwardRewind(-30); return false;">-30s</button>
+                    <button type="button" class="sm-button back-10" onclick="forwardRewind(-10); return false;">-10s</button>
+                    <button type="button" class="sm-button back-1" onclick="forwardRewind(-1); return false;">-1s</button>
+
+                    <button type="button" class="md-button" onclick="create_event(); return false;">create event</button>
+                    
+                    <button type="button" class="sm-button forward-1" onclick="forwardRewind(1); return false;">+1s</button>
+                    <button type="button" class="sm-button forward-10" onclick="forwardRewind(10); return false;">+10s</button>
+                    <button type="button" class="sm-button forward-30" onclick="forwardRewind(30); return false;">+30s</button>
+                    
+                    <div class="create-controls">
+                        <button type="button" class="md-button" onclick="return false;">save</button>    
+                        <button type="button" class="md-button" onclick="$('.create-controls').slideToggle(); return false;">discard</button>    
+
+
+                        <label>start time:</label><input type="text" id="start-time" class="time"/><button type="button" class="sm-button" onclick="captureTime('#start-time'); return false;" label="capture time">capture</button>
+                        <label>end time:</label><input type="text" id="end-time" class="time"/><button type="button" class="sm-button" onclick="captureTime('#end-time'); return false;" label="capture time">capture</button>
+                        <label>type:</label>
+                        <select id="start-time"/>
+                            <option value="comment">comment</option>
+                            <option value="comment">bookmark</option>
+                            <option value="transcript">transcript</option>
+                            <option value="link">link</option>
+                        </select>
+                        <br/>
+                        <label>input:</label>
+                        <textarea class="text-comments"></textarea>                       
+                        <label>tags:</label><input type="text" id="tags"/>
+                        <br/>
+                        <label>categories:</label>
+                        <input type="checkbox" name="category" value="robot">Robots</input>
+                        <input type="checkbox" name="category" value="institution">Institutions</input>
+                        <input type="checkbox" name="category" value="people">People</input>
+
+                        
+                            
+
+                    </div>
+    			</div>
+                <div class="transcript-section">
+                    The <a href="#" onclick="openSearchResults();">transcript</a> of the current section of the video with some keywords <a href="#" onclick="openSearchResults();">highlighted</a>. Clicking on the words brings videos that are most relevant to that word.
+                </div>
+    		</div>
 		</div>
 	</div>
 	
