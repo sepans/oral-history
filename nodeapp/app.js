@@ -64,6 +64,11 @@
         });
     });
     
+    app.get('/getAllVideoInfo', function(req,res){
+        Video.find({}, function(error, data){
+            res.json(data);
+        });
+    });
     
     app.get('/addvideo/:title/:vimeo_url', function(req, res){
         var video_data = {
