@@ -9,6 +9,8 @@
       , mongoose = require('mongoose');
 
     /* models */
+    app.enable("jsonp callback");
+
     var mongodb_url = 'mongodb://127.0.0.1:27017/vidtest';
     mongoose.connect(mongodb_url);
 
@@ -63,12 +65,21 @@
             res.json(data);
         });
     });
-    
+    /*
     app.get('/getAllVideoInfo', function(req,res){
         Video.find({}, function(error, data){
             res.json(data);
         });
     });
+    */
+    
+     app.get('/getAllVideoInfo', function(req,res){
+        Video.find({}, function(error, data){
+      	      var jsonp = { 'videoInfo' : data};
+	      res.json(jsonp);
+        });
+    });
+    
     
     app.get('/addvideo/:title/:vimeo_url', function(req, res){
         var video_data = {
