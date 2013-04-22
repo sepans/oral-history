@@ -6,7 +6,10 @@
     /* server */
     var express = require('express')
       , app = express.createServer()
-      , mongoose = require('mongoose');
+      , mongoose = require('mongoose')
+      , extend = require('mongoose-schema-extend');
+
+    app.register('.html', require('jade'));
 
     /* models */
     app.enable("jsonp callback");
@@ -17,20 +20,6 @@
     var Schema = mongoose.Schema
       , ObjectId = Schema.ObjectID;
 
-    var Hobby = new Schema({
-        name            : { type: String, required: true, trim: true }
-    });
-
-    var Person = new Schema({
-        first_name      : { type: String, required: true, trim: true }
-      , last_name       : { type: String, required: true, trim: true }
-      , username        : { type: String, required: true, trim: true }
-      , hobbies         : [Hobby]
-      , shoe_size       : Number
-      , eye_color       : String
-    });
-    
-    
     var Video = new Schema({
         title      : { type: String, required: true, trim: true }
       , vimeo_url       : { type: String,  trim: true }
@@ -47,23 +36,37 @@
     });
 
     var RelatedObject = new Schema({
-          type    : { type: String, required: true, trim: true }
+       /*   type    : { type: String, required: true, trim: true }
+        , seek_point : Number
+        , relatedness: Number*/
+        tags: [String]
+    
+    }, {discriminatorKey : '_type' });
+    
+    var Transcript = RelatedObject.extend({
+        text:   {type: String, trim: true}
+    });
+
+    var RelatedVideo = RelatedObject.extend({
+        video_id:   {type: String, trim: true}
         , seek_point : Number
         , relatedness: Number
-    
     });
     
-
+/*
 
     var Person = mongoose.model('Person', Person);
-
+*/
     var Video = mongoose.model('Video', Video);
 
 
     app.get('/', function(req,res){
-        Video.find({}, function(error, data){
+       /* Video.find({}, function(error, data){
             res.json(data);
         });
+        
+        */
+         res.render('index.html');
     });
     /*
     app.get('/getAllVideoInfo', function(req,res){
@@ -130,7 +133,48 @@
         });
        // res.json("done");
     });
+    
+    
+   app.post('/addcomment', function(req, res){
+       console.log(request.body.video_id);
+       console.log(request.body.comment);
+     /*   var person_data = {
+     
+            first_name: req.params.first
+          , last_name: req.params.last
+          , username: req.params.username
+        };
 
+        var person = new Person(person_data);
+
+        person.save( function(error, data){
+            if(error){
+                res.json(error);
+            }
+            else{
+                res.json(data);
+            }
+        });
+        */
+    });
+ 
+    /*
+    var Hobby = new Schema({
+        name            : { type: String, required: true, trim: true }
+    });
+
+    var Person = new Schema({
+        first_name      : { type: String, required: true, trim: true }
+      , last_name       : { type: String, required: true, trim: true }
+      , username        : { type: String, required: true, trim: true }
+      , hobbies         : [Hobby]
+      , shoe_size       : Number
+      , eye_color       : String
+    });
+    
+ */   
+    
+/*
     app.get('/adduser/:first/:last/:username', function(req, res){
         var person_data = {
             first_name: req.params.first
@@ -171,6 +215,6 @@
             }
         });
     });
-
+*/
     app.listen(8080);
     console.log("listening on port %d", app.address().port);

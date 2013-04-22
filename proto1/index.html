@@ -93,9 +93,10 @@
 	$(document).ready(function() {
 	
 	    // just for testing mongodb/nodejs integration
-		
+		console.log('redy');
 		$.getJSON('http://strangelove.ncsa.uiuc.edu:8080/getAllVideoInfo?p1=1&callback=?', function(data) {
-           //console.log(data);
+           console.log('data');
+           console.log(data);
            videoInfo = turnToKeydMap(data.videoInfo);
             
             
@@ -573,6 +574,22 @@ function processEvents(events,currentTime, previousTime, animate) {
       //throw "Couldn't find object with id: " + id;
     }
 	
+	
+	function saveEvent() {
+	
+	    var data = { 'start-time': $('#start-time').val(), 'end-time': $('#end-time').val(), 'text': $('#text-comments').val(),
+	                 'event-type': $('#event-type').val()};
+        validateEventData(data);    	
+	    console.log(data);
+	    $.post("localhost:8080/addcomment", data ,function(data) {
+            alert("Data Loaded: " + data);
+        });
+	    
+	}
+	
+	function validateEventData() {
+	
+	}
 
 	
 	
@@ -613,29 +630,29 @@ function processEvents(events,currentTime, previousTime, animate) {
                     <button type="button" class="sm-button forward-30" onclick="forwardRewind(30); return false;">+30s</button>
                     
                     <div class="create-controls">
-                        <button type="button" class="md-button" onclick="return false;">save</button>    
+                        <button type="button" class="md-button" onclick="saveEvent();return false;">save</button>    
                         <button type="button" class="md-button" onclick="$('.create-controls').slideToggle(); return false;">discard</button>    
 
-
-                        <label>start time:</label><input type="text" id="start-time" class="time"/><button type="button" class="sm-button" onclick="captureTime('#start-time'); return false;" label="capture time">capture</button>
-                        <label>end time:</label><input type="text" id="end-time" class="time"/><button type="button" class="sm-button" onclick="captureTime('#end-time'); return false;" label="capture time">capture</button>
-                        <label>type:</label>
-                        <select id="start-time"/>
-                            <option value="comment">comment</option>
-                            <option value="comment">bookmark</option>
-                            <option value="transcript">transcript</option>
-                            <option value="link">link</option>
-                        </select>
-                        <br/>
-                        <label>input:</label>
-                        <textarea class="text-comments"></textarea>                       
-                        <label>tags:</label><input type="text" id="tags"/>
-                        <br/>
-                        <label>categories:</label>
-                        <input type="checkbox" name="category" value="robot">Robots</input>
-                        <input type="checkbox" name="category" value="institution">Institutions</input>
-                        <input type="checkbox" name="category" value="people">People</input>
-
+                        <form id="event-form">
+                            <label>start time:</label><input type="text" id="start-time" class="time"/><button type="button" class="sm-button" onclick="captureTime('#start-time'); return false;" label="capture time">capture</button>
+                            <label>end time:</label><input type="text" id="end-time" class="time"/><button type="button" class="sm-button" onclick="captureTime('#end-time'); return false;" label="capture time">capture</button>
+                            <label>type:</label>
+                            <select id="event-type"/>
+                                <option value="comment">comment</option>
+                                <option value="comment">bookmark</option>
+                                <option value="transcript">transcript</option>
+                                <option value="link">link</option>
+                            </select>
+                            <br/>
+                            <label>input:</label>
+                            <textarea id="text-comments"></textarea>                       
+                            <label>tags:</label><input type="text" id="tags"/>
+                            <br/>
+                            <label>categories:</label>
+                            <input type="checkbox" name="category" value="robot">Robots</input>
+                            <input type="checkbox" name="category" value="institution">Institutions</input>
+                            <input type="checkbox" name="category" value="people">People</input>
+                        </form>
                         
                             
 
