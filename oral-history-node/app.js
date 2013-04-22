@@ -65,40 +65,42 @@ app.get('/', function(req, res) {
       , vimeo_url       : { type: String,  trim: true }
       , url       : { type: String,  trim: true }
       , thumbmail       : { type: String, trim: true }
-      , events : [Event]
+      , events : [{
+                     timestamp   : Number
+                   , duration    : Number
+                   , related_objects : [RelatedObject]
+                  }]
     });
     
+ /*
     var EventSchema = new Schema({
          timestamp   : Number
        , duration    : Number
        , related_objects : [RelatedObject]
     
     });
-
+*/
     var RelatedObjectSchema = new Schema({
-       /*   type    : { type: String, required: true, trim: true }
-        , seek_point : Number
-        , relatedness: Number*/
         tags: [String]
     
     }, {discriminatorKey : '_type' });
     
-    var TranscriptSchema = RelatedObject.extend({
+    var TranscriptSchema = RelatedObjectSchema.extend({
         text:   {type: String, trim: true}
     });
 
-    var RelatedVideoSchema = RelatedObject.extend({
+    var RelatedVideoSchema = RelatedObjectSchema.extend({
         video_id:   {type: String, trim: true}
         , seek_point : Number
         , relatedness: Number
     });
     
-/*
+    
 
-    var Person = mongoose.model('Person', Person);
-*/
     var Video = mongoose.model('Video', VideoSchema);
+/*
     var Event = mongoose.model('Event', VideoSchema);
+*/
     var RelatedObject = mongoose.model('RelatedObject', RelatedObjectSchema);
     var Transcript = mongoose.model('Transcript', TranscriptSchema);
     var RelatedVideo = mongoose.model('RelatedVideo', RelatedVideoSchema);
@@ -188,23 +190,33 @@ app.get('/', function(req, res) {
        console.log('text '+req.body['text']);
        console.log('event-type '+req.body['event-type']);
        
-     Video.find({'id':req.body['vid_id']}, function(error, video){
-      	      var event = new Event({timestamp:req.body['start-time'], duration : req.body['end-time']-req.body['start-time'] });
-      	     // event.timestamp = req.body['start-time'];
-      	     // event.duration = req.body['end-time']-req.body['start-time'];
+     Video.find({'id':req.body['vid_id']}, function(error, videos){
+              if (error) return handleError(error);
+
+              var video = videos[0];             
+              console.log('vid ');
+              console.log(video);
+
+      	      console.log('video title '+video.title);
+      	      console.log('video events '+video.events);
+      	      console.log('video events '+video['events']);
+
+      	     // var event = new Event({timestamp:req.body['start-time'], duration : req.body['end-time']-req.body['start-time'] });
+              event = {timestamp:req.body['start-time'], duration : req.body['end-time']-req.body['start-time'] };
+      	      console.log('event '+event);
       	      
-      	      var transcript= new Transcript();
-      	      transcript.text = req.body['text'];
+      	      var transcript= new Transcript({text:req.body['text']} );
+      	      console.log('trans '+transcript);
+      	      //transcript.text = req.body['text'];
       	      
       	      var rel = new Array();
       	      rel.push(transcript);
       	      event.related_objects = rel; 
       	      
-      	      console.log(event);
       	      
       	      video.events.push(event);
       	      
-      	      console.log(video);
+      	      console.log('vid with new event '+video);
       	      
       	      video.save( function(error, data){
                     if(error){
