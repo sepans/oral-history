@@ -578,11 +578,12 @@ function processEvents(events,currentTime, previousTime, animate) {
 	
 	function saveEvent() {
 	
-	    var data = { 'vid_id': history[step-1].id,'start-time': $('#start-time').val(), 'end-time': $('#end-time').val(), 'text': $('#text-comments').val(),
+	    console.log(history[step-1].id);
+	    var eventData = { 'vid_id': history[step-1].id,'start-time': $('#start-time').val(), 'end-time': $('#end-time').val(), 'text': $('#text-comments').val(),
 	                 'event-type': $('#event-type').val()};
-        validateEventData(data);    	
-	    console.log(data);
-	    $.post("addcomment", data ,function(data) {
+        validateEventData(eventData);    	
+	    console.log(eventData);
+	    $.post("addcomment", eventData ,function(data) {
             alert("Data Loaded: " + data);
         });
 	    

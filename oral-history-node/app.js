@@ -190,20 +190,24 @@ app.get('/', function(req, res) {
        console.log('text '+req.body['text']);
        console.log('event-type '+req.body['event-type']);
        
-     Video.find({'id':req.body['vid_id']}, function(error, videos){
+     Video.findOne({'id':req.body['vid_id']}, function(error, video){
               if (error) return handleError(error);
 
-              var video = videos[0];             
-              console.log('vid ');
+              //var video = videos[0];  
+                         
+              console.log('--- vid ');
               console.log(video);
 
-      	      console.log('video title '+video.title);
+      	  /*    console.log('video title '+video.title);
       	      console.log('video events '+video.events);
       	      console.log('video events '+video['events']);
+*/
 
       	     // var event = new Event({timestamp:req.body['start-time'], duration : req.body['end-time']-req.body['start-time'] });
-              event = {timestamp:req.body['start-time'], duration : req.body['end-time']-req.body['start-time'] };
-      	      console.log('event '+event);
+              var event = {timestamp:req.body['start-time'], duration : req.body['end-time']-req.body['start-time']};//,related_objects: [{text:req.body['text']} ] };
+      	      console.log('--- event '+event);
+      	      
+      	      //done inline
       	      
       	      var transcript= new Transcript({text:req.body['text']} );
       	      console.log('trans '+transcript);
@@ -216,13 +220,16 @@ app.get('/', function(req, res) {
       	      
       	      video.events.push(event);
       	      
-      	      console.log('vid with new event '+video);
+      	      console.log('---- vid with new event ');
+      	      console.log(video);
       	      
       	      video.save( function(error, data){
                     if(error){
                         res.json(error);
                     }
                     else{
+      	                console.log('---- data ');
+              	        console.log(data);
                         res.json(data);
                     }
             });
