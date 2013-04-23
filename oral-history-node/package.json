@@ -9,6 +9,8 @@
     "express": "3.1.0",
     "jade": "*",
     "mongoose": "*",
-    "mongoose-schema-extend": "*"
+    "mongoose-schema-extend": "*",
+    "ejs": "*",
+    "mongodb" : "*"
   }
 }

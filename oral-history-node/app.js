@@ -54,21 +54,34 @@ app.get('/', function(req, res) {
     res.render('index.html');
 });
 */
-    var mongodb_url = 'mongodb://127.0.0.1:27017/vidtest';
+    var mongodb_url = 'mongodb://127.0.0.1:27017/vidtest2';
     mongoose.connect(mongodb_url);
 
     var Schema = mongoose.Schema
       , ObjectId = Schema.ObjectID;
 
     var VideoSchema = new Schema({
-        title      : { type: String, required: true, trim: true }
+        _id : String
+      , title      : { type: String, required: true, trim: true }
       , vimeo_url       : { type: String,  trim: true }
       , url       : { type: String,  trim: true }
-      , thumbmail       : { type: String, trim: true }
+      , thumbnail       : { type: String }
       , events : [{
                      timestamp   : Number
                    , duration    : Number
-                   , related_objects : [RelatedObject]
+                   , related_objects : [{
+                                              _type: { type: String, required: true, trim: true }
+                                            , text:   {type: String, trim: true}
+                                            , tags: [String]
+                                            
+                                            // for video
+                                            , _related_video : { type: String, ref: 'Video' }
+                                            , temp_rel_video : String // temporary for data.js files. will be removed and use _related_video
+                                            , seek_point : Number
+                                            , relatedness: Number
+
+
+                                        }]
                   }]
     });
     
@@ -80,6 +93,8 @@ app.get('/', function(req, res) {
     
     });
 */
+
+/*
     var RelatedObjectSchema = new Schema({
         tags: [String]
     
@@ -95,16 +110,21 @@ app.get('/', function(req, res) {
         , relatedness: Number
     });
     
+*/
+    
     
 
     var Video = mongoose.model('Video', VideoSchema);
 /*
     var Event = mongoose.model('Event', VideoSchema);
 */
+  
+  /*  
     var RelatedObject = mongoose.model('RelatedObject', RelatedObjectSchema);
     var Transcript = mongoose.model('Transcript', TranscriptSchema);
     var RelatedVideo = mongoose.model('RelatedVideo', RelatedVideoSchema);
 
+*/
 
     app.get('/', function(req,res){
        /* Video.find({}, function(error, data){
@@ -152,7 +172,7 @@ app.get('/', function(req, res) {
         //console.log(dataFile.videoInfo);
         var mongodbz = require('mongodb');
         var serverz = new mongodbz.Server("127.0.0.1", 27017, {safe:true});
-        new mongodbz.Db('vidtest', serverz, {safe:true}).open(function (error, client) {
+        new mongodbz.Db('vidtest2', serverz, {safe:true}).open(function (error, client) {
               if (error) throw error;
               var collection = new mongodbz.Collection(client, 'video');
               for(videoId in dataFile.videoInfo) {
@@ -204,11 +224,13 @@ app.get('/', function(req, res) {
 */
 
       	     // var event = new Event({timestamp:req.body['start-time'], duration : req.body['end-time']-req.body['start-time'] });
-              var event = {timestamp:req.body['start-time'], duration : req.body['end-time']-req.body['start-time']};//,related_objects: [{text:req.body['text']} ] };
-      	      console.log('--- event '+event);
+              var event = {timestamp:req.body['start-time'], duration : req.body['end-time']-req.body['start-time'],
+                        related_objects: [{text:req.body['text'],_type:req.body['event-type'] } ] };
+      	      console.log('--- event ');
+      	      console.log(event);
       	      
       	      //done inline
-      	      
+      	      /*
       	      var transcript= new Transcript({text:req.body['text']} );
       	      console.log('trans '+transcript);
       	      //transcript.text = req.body['text'];
@@ -216,7 +238,7 @@ app.get('/', function(req, res) {
       	      var rel = new Array();
       	      rel.push(transcript);
       	      event.related_objects = rel; 
-      	      
+      	      */
       	      
       	      video.events.push(event);
       	      
@@ -225,6 +247,7 @@ app.get('/', function(req, res) {
       	      
       	      video.save( function(error, data){
                     if(error){
+                        console.log('error '+error);
                         res.json(error);
                     }
                     else{
