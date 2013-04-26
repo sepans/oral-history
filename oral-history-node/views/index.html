@@ -103,8 +103,9 @@
            console.log(videoInfo);
             
             var initialVideo;// = videoInfo.first();
-            for (first in videoInfo) break;
-            initialVideo = videoInfo[first];
+           // for (first in videoInfo) break;
+           
+            initialVideo = videoInfo['517b00a50c98266a20000003'];
             
             
             
@@ -114,7 +115,7 @@
             $('.stat-bar').progressbar({value: false,max:100});
             
             //currentlyPlayingId = 'vid1';
-            $('#iframe-container').html('<iframe id="player1" src="http://player.vimeo.com/video/45371204?title=0&portrait=0&byline=0&color=FFA200&api=1&player_id=player1" width="600px" height="400px" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>');
+            $('#iframe-container').html('<iframe id="player1" src="'+initialVideo.vimeo_url+'?title=0&portrait=0&byline=0&color=FFA200&api=1&player_id=player1" width="600px" height="400px" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>');
            // history[step]={'step':step,'id':'vid1','title':'Jean-Daniel Nicoud', 'vimeo_url':'http://player.vimeo.com/video/45371204'};
            history[step]={'step':step,'_id':initialVideo['_id'],'title':initialVideo.title, 'vimeo_url':initialVideo.vimeo_url};
            
@@ -151,6 +152,10 @@
                 
                 var currentId = history[step-1]._id;
                 var events = getVideoByVideoId(currentId).events;
+                
+                // for marking events on .stat-bar not working.
+                
+                /*
                 for(var i=0;i<events.length;i++ ) {
                     var event = events[i];
                     
@@ -159,7 +164,7 @@
                     var eventHtml = '<div id="event-'+event._id+'" class="event" style="left:'+left+'"></div>';
                     $('.stat-bar').append(eventHtml);
                 }
-                
+                */
                 
                 
                 
@@ -272,7 +277,14 @@ function onPlayProgress(data, id) {
 
    		    var currentId = history[step-1]._id;
    			var events = getVideoByVideoId(currentId).events;
+   		/*	
+   			console.log(currentId);
+   			console.log(getVideoByVideoId(currentId));
    			
+   			console.log('events');
+   			console.log(getVideoByVideoId(currentId).events);
+        */
+
    		//	for(var event in events) { 
    		
    		    processEvents(events,currentTime, previousTime,true);
@@ -305,7 +317,10 @@ function processEvents(events,currentTime, previousTime, animate) {
 						    continue;
 						}
 						//console.log(rel_object.id);
-						var relatedVideo = getVideoByOldVideoId(rel_object.temp_rel_video);
+						//var relatedVideo = getVideoByOldVideoId(rel_object.temp_rel_video);
+
+                        var relatedVideo = videoInfo[rel_object._related_video];
+                        console.log(relatedVideo);
 
 						var listId= 'video_'+relatedVideo._id;
 						var listElement = $('.ralated-video-list #'+listId);
@@ -583,17 +598,22 @@ function processEvents(events,currentTime, previousTime, animate) {
 	}
 
     // for temp_rel_video only will be removed
-    var vidToMongoMapping = null;
+
+//    var vidToMongoMapping = null;
     
 	function getVideoByOldVideoId(id) {
+	    return videoInfo[id];
+	/*
 	    if(vidToMongoMapping==null)
 	        makevidToMongoMapping();
 	   console.log(vidToMongoMapping[id]);
 	   console.log(videoInfo[vidToMongoMapping[id]]);
 	   return videoInfo[vidToMongoMapping[id]];
+	   
+	*/
 	    
 	}
-	
+/*	
 	function makevidToMongoMapping() {
 	    vidToMongoMapping = {};
 	    var i = 1;
@@ -604,7 +624,7 @@ function processEvents(events,currentTime, previousTime, animate) {
 	    console.log(vidToMongoMapping);
 	}
 
-	
+*/	
 	// not being used
 	function findById(source, id) {
       for (var i = 0; i < source.length; i++) {
@@ -620,7 +640,7 @@ function processEvents(events,currentTime, previousTime, animate) {
 	function saveEvent() {
 	
 	    console.log(history[step-1]._id);
-	    var eventData = { 'vid_id': history[step-1]._id,'start-time': $('#start-time').val(), 'end-time': $('#end-time').val(), 'text': $('#text-comments').val(),
+	    var eventData = { 'vid_id': history[step-1]._id,'vid_title': history[step-1].title,'start-time': $('#start-time').val(), 'end-time': $('#end-time').val(), 'text': $('#text-comments').val(),
 	                 'event-type': $('#event-type').val()};
         validateEventData(eventData);    	
 	    console.log(eventData);

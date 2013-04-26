@@ -3,7 +3,7 @@
  * Module dependencies.
  */
  
-var dataFile= require('./data/data.js');
+var dataFile= require('./data/data_lite.js');
  
 
 var express = require('express')
@@ -13,6 +13,7 @@ var express = require('express')
   , path = require('path')
   , mongoose = require('mongoose')
   , extend = require('mongoose-schema-extend');
+
 
 
 var app = express();
@@ -55,13 +56,16 @@ app.get('/', function(req, res) {
 });
 */
     var mongodb_url = 'mongodb://127.0.0.1:27017/vidtest2';
-    mongoose.connect(mongodb_url);
+   
+    mongoose.connect(mongodb_url,{db: { safe: true }});
+    
+   // mongoose.createConnection(mongodb_url, { server: { poolSize: 4 },db: { safe: true }});
 
     var Schema = mongoose.Schema
       , ObjectId = Schema.ObjectID;
 
     var VideoSchema = new Schema({
-        _id : String
+        _id : {type : Schema.ObjectId}
       , title      : { type: String, required: true, trim: true }
       , vimeo_url       : { type: String,  trim: true }
       , url       : { type: String,  trim: true }
@@ -71,11 +75,11 @@ app.get('/', function(req, res) {
                    , duration    : Number
                    , related_objects : [{
                                               _type: { type: String, required: true, trim: true }
-                                            , text:   {type: String, trim: true}
+                                            , text:  { type: String, trim: true}
                                             , tags: [String]
                                             
                                             // for video
-                                            , _related_video : { type: String, ref: 'Video' }
+                                            , _related_video : { type: Schema.ObjectId, ref: 'Video' }
                                             , temp_rel_video : String // temporary for data.js files. will be removed and use _related_video
                                             , seek_point : Number
                                             , relatedness: Number
@@ -83,7 +87,7 @@ app.get('/', function(req, res) {
 
                                         }]
                   }]
-    });
+    },{versionKey:false, safe: true});
     
  /*
     var EventSchema = new Schema({
@@ -169,35 +173,72 @@ app.get('/', function(req, res) {
     });
 
     app.get('/addallvideos', function(req, res){
-        //console.log(dataFile.videoInfo);
-        var mongodbz = require('mongodb');
-        var serverz = new mongodbz.Server("127.0.0.1", 27017, {safe:true});
-        new mongodbz.Db('vidtest2', serverz, {safe:true}).open(function (error, client) {
-              if (error) throw error;
-              var collection = new mongodbz.Collection(client, 'video');
-              for(videoId in dataFile.videoInfo) {
-                    var videoData = dataFile.videoInfo[videoId];
-                    var video = new Video(videoData);
-                    console.log(video);
-                    video.save( function(error, data){
-                        if(error){
-                            res.json(error);
-                        }
-                        else{
-                            res.json(data);
-                        }
-                    });
-               /*   collection.insert(video, {},
-                        function(err, objects) {
-                            if (err) console.warn(err.message);
-                            if (err && err.message.indexOf('E11000 ') !== -1) {
-                              // this _id was already inserted in the database
-                        }
-                  });*/
+
+       console.log('before for');
+       for(videoId in dataFile.videoInfo) {
+            var videoData = dataFile.videoInfo[videoId];
+            //var video = new Video(videoData);
+            var video = new Video({title: videoData.title, url: videoData.url, vimeo_url: videoData.vimeo_url,
+                                  thumbnail: videoData.thumbnail});
+            //console.log(video);
+            video.save( function(error, data){
+                if(error){
+                   // res.json(error);
+                   console.log('error');
+                   console.log(error);
+                }
+                else{
+                   // res.json(data);
+                   console.log('saved');
+                   console.log(data);
+                   
+                }
+            });
+        }       // for(vidoId
+        
+        console.log('#### all videos loaded');
+        
+        setTimeout(function() {
+        
+            Video.findOne({ title : 'Jean-Daniel Nicoud'}, function(error, video1){
+                if(error) console.log(error);
+                console.log('--- video 1 ');
+                console.log(video1);
                 
-            }
-        });
-       // res.json("done");
+                Video.findOne({ title : 'Minoru Asada'}, function(error, video2){
+                      if(error) console.log(error);
+                      console.log('--- video 2 ');
+                      console.log(video2);
+                      var event = {timestamp:2, duration : 20,
+                      related_objects: [{text:'a related video',_type:'video' ,
+                                        seek_point: 50, relatedness: 0.8,_related_video: video2}] };
+                      console.log('--- event ');
+                      console.log(event);
+                      
+                      video1.events.push(event);
+                      
+                      console.log('---- vid with new event ');
+                      console.log(video1);
+                      
+                      video1.save( function(error, data){
+                            if(error){
+                                console.log('error '+error);
+                            }
+                            else{
+                                console.log('---- data ');
+                                console.log(data);
+                                res.json(data);
+                            }
+                    });
+                });
+            });
+        },1000);
+
+                
+            
+        
+        
+ 
     });
     
     
@@ -210,9 +251,26 @@ app.get('/', function(req, res) {
        console.log('text '+req.body['text']);
        console.log('event-type '+req.body['event-type']);
        
-     Video.findOne({'id':req.body['vid_id']}, function(error, video){
-              if (error) return handleError(error);
+       var ObjectId = mongoose.Schema.Types.ObjectId;
+       var iid = req.body['vid_id'];
+       console.log('_id '+iid);
 
+       var vid_title = req.body['vid_title'];
+       
+       //Video.findOne({ '_id' : new ObjectId(iid)}, function(error, video){
+       Video.findOne({ '_id' : iid}, function(error, video){
+       //Video.findById(new ObjectId(iid), function(error, video){
+       
+       // searching by title for now because none of the above worked !!!!!!!
+       
+       console.log('title '+vid_title);
+       
+  //     Video.findOne({ title : vid_title}, function(error, video){
+       
+              if (error) {
+                 console.log('error '+error);
+                 return handleError(error);
+             }
               //var video = videos[0];  
                          
               console.log('--- vid ');
