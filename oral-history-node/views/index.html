@@ -313,72 +313,79 @@ function processEvents(events,currentTime, previousTime, animate) {
 						console.log(rel_object);
 						console.log(rel_object._id);
 						console.log(rel_object._type);
-						if(rel_object._type!='video') {
-						    continue;
-						}
-						//console.log(rel_object.id);
-						//var relatedVideo = getVideoByOldVideoId(rel_object.temp_rel_video);
-
-                        var relatedVideo = videoInfo[rel_object._related_video];
-                        console.log(relatedVideo);
-
-						var listId= 'video_'+relatedVideo._id;
-						var listElement = $('.ralated-video-list #'+listId);
+						if(rel_object._type=='video') {
 						
-						var listWidth =$('.ralated-video-list').width();
-
-						rel_object.width = rel_object.relatedness*listWidth ;
-						rel_object.relatedness_percent = rel_object.relatedness * 100;
-						
-						console.log(relatedVideo);
-						rel_object.title = relatedVideo.title;
-
-						rel_object.thumbnail = relatedVideo.thumbnail;
-
-						if(listElement.length==0) {
-						    console.log('rel_object');
-						    console.log(rel_object);
-						    rel_object.rel_video_id = relatedVideo._id;
-							addRelatedVideoToHtmlList(rel_object);	   				
-						}
-						
-						
-						if( rel_object.relatedness==0) {
-							console.log('removing');
-//							setTimeout(function() {removeElement(listElement);} , 500);
-                            if(animate) {
-                                
-                                $('.ralated-video-list #'+listId+' .rel_bar').animate({'opacity':0}, 1000, function() {
-                                            
-                                            var listItem = $(this).parents('.related_list_item');
-                                            listItem.remove();
-                                            //console.log(element);
+                                                        //console.log(rel_object.id);
+                            //var relatedVideo = getVideoByOldVideoId(rel_object.temp_rel_video);
     
-                                });
+                            var relatedVideo = videoInfo[rel_object._related_video];
+                            console.log(relatedVideo);
+    
+                            var listId= 'video_'+relatedVideo._id;
+                            var listElement = $('.ralated-video-list #'+listId);
+                            
+                            var listWidth =$('.ralated-video-list').width();
+    
+                            rel_object.width = rel_object.relatedness*listWidth ;
+                            rel_object.relatedness_percent = rel_object.relatedness * 100;
+                            
+                            console.log(relatedVideo);
+                            rel_object.title = relatedVideo.title;
+    
+                            rel_object.thumbnail = relatedVideo.thumbnail;
+    
+                            if(listElement.length==0) {
+                                console.log('rel_object');
+                                console.log(rel_object);
+                                rel_object.rel_video_id = relatedVideo._id;
+                                addRelatedVideoToHtmlList(rel_object);	   				
+                            }
+                            
+                            
+                            if( rel_object.relatedness==0) {
+                                console.log('removing');
+    //							setTimeout(function() {removeElement(listElement);} , 500);
+                                if(animate) {
+                                    
+                                    $('.ralated-video-list #'+listId+' .rel_bar').animate({'opacity':0}, 1000, function() {
+                                                
+                                                var listItem = $(this).parents('.related_list_item');
+                                                listItem.remove();
+                                                //console.log(element);
+        
+                                    });
+                                }
+                                else {
+                                    if(listItem!=undefined) {
+                                        listItem.remove();
+                                    }
+                                
+                                }
+                                
                             }
                             else {
-                                if(listItem!=undefined) {
-                                    listItem.remove();
-                                }
+    
+                            }
+                            if(animate) {
+                                $('.ralated-video-list #'+listId+' .rel_bar').animate({'width':rel_object.width});
+                                $('.ralated-video-list #'+listId+' .rel-rel').animate({'left':rel_object.width-12});
+                            }
+                            else {
+                            
+                                $('.ralated-video-list #'+listId+' .rel_bar').css('width',rel_object.width);
+                                $('.ralated-video-list #'+listId+' .rel-rel').css('left',rel_object.width-12);
                             
                             }
-							
-						}
-						else {
+                            $('.ralated-video-list #'+listId+' .rel-rel').text(rel_object.relatedness_percent+'%');
+                            
 
+						    
 						}
-						if(animate) {
-    						$('.ralated-video-list #'+listId+' .rel_bar').animate({'width':rel_object.width});
-	    					$('.ralated-video-list #'+listId+' .rel-rel').animate({'left':rel_object.width-12});
-	    				}
-	    				else {
-	    				
-    						$('.ralated-video-list #'+listId+' .rel_bar').css('width',rel_object.width);
-	    					$('.ralated-video-list #'+listId+' .rel-rel').css('left',rel_object.width-12);
-	    				
-	    				}
-						$('.ralated-video-list #'+listId+' .rel-rel').text(rel_object.relatedness_percent+'%');
+						else if(rel_object._type=='transcript') {
+						    $('.transcript-section').text(rel_object.text);
 						
+						}
+
 					
 	   				}
 	   				
@@ -645,7 +652,10 @@ function processEvents(events,currentTime, previousTime, animate) {
         validateEventData(eventData);    	
 	    console.log(eventData);
 	    $.post("addcomment", eventData ,function(data) {
-            console.log(data);
+            console.log('data saved');
+            
+            $('.create-controls').slideToggle(); 
+            
         });
 	    
 	}
@@ -722,7 +732,8 @@ function processEvents(events,currentTime, previousTime, animate) {
                     </div>
     			</div>
                 <div class="transcript-section">
-                    The <a href="#" onclick="openSearchResults();">transcript</a> of the current section of the video with some keywords <a href="#" onclick="openSearchResults();">highlighted</a>. Clicking on the words brings videos that are most relevant to that word.
+                    Transcript
+                    <!--The <a href="#" onclick="openSearchResults();">transcript</a> of the current section of the video with some keywords <a href="#" onclick="openSearchResults();">highlighted</a>. Clicking on the words brings videos that are most relevant to that word.-->
                 </div>
     		</div>
 		</div>
