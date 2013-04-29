@@ -28,7 +28,7 @@ app.configure(function(){
 //  app.use(require('connect').bodyParser());
   app.use(express.methodOverride());
 
- app.use('/img',express.static(path.join(__dirname, 'public/images')));
+ app.use('/images',express.static(path.join(__dirname, 'public/images')));
  app.use('/js',express.static(path.join(__dirname, 'public/javascripts')));
  app.use('/css',express.static(path.join(__dirname, 'public/stylesheets')));
  //app.enable("jsonp callback");
