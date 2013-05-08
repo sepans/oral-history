@@ -95,7 +95,16 @@
 		.create-controls label {vertical-align: middle;}
 		
 		.window_panel { position: absolute;}
-		.ui-widget-content { backgound-color: #FFF;}
+		
+		
+		.ui-widget-content { background: none;}
+		
+		.ui-widget-header { background: none; border-color: #CCC; }
+		.ui-state-default a, .ui-state-default a:link, .ui-state-default a:visited { color: #555; font-family: arial; font-weight: normal;}
+		.ui-corner-all, .ui-corner-top, .ui-corner-right, .ui-corner-tr { border-radius: 0px;}
+		.ui-tabs .ui-tabs-panel {padding-left: 5px;}
+		
+		.tab-text { width: 300px; height: 100px;}
 		
 		
 		/*.back-10, back-30 {float: left;}

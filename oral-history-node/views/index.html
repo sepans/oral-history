@@ -75,6 +75,7 @@
 	var videoInfo = {};
 	
 	
+	
 
  
  
@@ -94,6 +95,14 @@
 	$(document).ready(function() {
 	
 	    // just for testing mongodb/nodejs integration
+	    
+	    $( "#event-tabs" ).tabs({ selected: 2 });
+	    
+	    $("#event-tabs").bind("tabsselect", function(event, ui) {
+	        var tab_list = ['comment','bookmark','transcript','link'];
+	        $('#event-type').val(tab_list[ui.index]);
+        });
+	    
 		console.log('doc/ready');
 		$.getJSON('getAllVideoInfo?p1=1', function(data) {
            console.log('data');
@@ -646,17 +655,25 @@ function processEvents(events,currentTime, previousTime, animate) {
 	
 	function saveEvent() {
 	
-	    console.log(history[step-1]._id);
-	    var eventData = { 'vid_id': history[step-1]._id,'vid_title': history[step-1].title,'start-time': $('#start-time').val(), 'end-time': $('#end-time').val(), 'text': $('#text-comments').val(),
+//	    console.log(history[step-1]._id);
+//	    console.log('#'+$('#event-type').val()+'-tab .tab-text');
+//	    console.log($('#'+$('#event-type').val()+'-tab .tab-text'));
+//	    console.log($('#'+$('#event-type').val()+'-tab .tab-text').val());
+	    var text_content = $('#'+$('#event-type').val()+'-tab .tab-text').val();
+	    var eventData = { 'vid_id': history[step-1]._id,'vid_title': history[step-1].title,'start-time': $('#start-time').val(), 'end-time': $('#end-time').val(), 'text': text_content, //$('#text-comments').val(),
 	                 'event-type': $('#event-type').val()};
+	                 
         validateEventData(eventData);    	
 	    console.log(eventData);
+	    
 	    $.post("addcomment", eventData ,function(data) {
             console.log('data saved');
+            console.log(data);
             
             $('.create-controls').slideToggle(); 
             
         });
+        
 	    
 	}
 	
@@ -699,40 +716,67 @@ function processEvents(events,currentTime, previousTime, animate) {
                     <div class="stat-bar">
                             <div type="text" class="stat">no stat</div>
                     </div>
-                    <button type="button" class="sm-button back-30" onclick="forwardRewind(-30); return false;">-30s</button>
-                    <button type="button" class="sm-button back-10" onclick="forwardRewind(-10); return false;">-10s</button>
-                    <button type="button" class="sm-button back-1" onclick="forwardRewind(-1); return false;">-1s</button>
+                    <button type="button" class="sm-button back-30" onclick="forwardRewind(-30); return false;"><30s</button>
+                    <button type="button" class="sm-button back-10" onclick="forwardRewind(-10); return false;"><10s</button>
+                    <button type="button" class="sm-button back-1" onclick="forwardRewind(-1); return false;"><1s</button>
 
                     <button type="button" class="md-button" onclick="create_event(); return false;">create event</button>
                     
-                    <button type="button" class="sm-button forward-1" onclick="forwardRewind(1); return false;">+1s</button>
-                    <button type="button" class="sm-button forward-10" onclick="forwardRewind(10); return false;">+10s</button>
-                    <button type="button" class="sm-button forward-30" onclick="forwardRewind(30); return false;">+30s</button>
+                    <button type="button" class="sm-button forward-1" onclick="forwardRewind(1); return false;">1s></button>
+                    <button type="button" class="sm-button forward-10" onclick="forwardRewind(10); return false;">10s></button>
+                    <button type="button" class="sm-button forward-30" onclick="forwardRewind(30); return false;">30s></button>
                     
                     <div class="create-controls">
                         <button type="button" class="md-button" onclick="saveEvent();return false;">save</button>    
                         <button type="button" class="md-button" onclick="$('.create-controls').slideToggle(); return false;">discard</button>    
+                        
+                        <label>start time:</label><input type="text" id="start-time" class="time"/><button type="button" class="sm-button" onclick="captureTime('#start-time'); return false;" label="capture time">capture</button>
+                        <label>end time:</label><input type="text" id="end-time" class="time"/><button type="button" class="sm-button" onclick="captureTime('#end-time'); return false;" label="capture time">capture</button>
+                        <br/><br/>
+                        <label>categories:</label>
+                        <input type="checkbox" name="category" value="robot">Robots</input>
+                        <input type="checkbox" name="category" value="institution">Institutions</input>
+                        <input type="checkbox" name="category" value="people">People</input>
+                        <br/><br/>
+                        <label>tags:</label><input type="text" id="tags"/>
+                        <br/><br/>
 
-                        <form id="event-form">
-                            <label>start time:</label><input type="text" id="start-time" class="time"/><button type="button" class="sm-button" onclick="captureTime('#start-time'); return false;" label="capture time">capture</button>
-                            <label>end time:</label><input type="text" id="end-time" class="time"/><button type="button" class="sm-button" onclick="captureTime('#end-time'); return false;" label="capture time">capture</button>
-                            <label>type:</label>
-                            <select id="event-type"/>
-                                <option value="comment">comment</option>
-                                <option value="comment">bookmark</option>
-                                <option value="transcript">transcript</option>
-                                <option value="link">link</option>
-                            </select>
-                            <br/>
-                            <label>input:</label>
-                            <textarea id="text-comments"></textarea>                       
-                            <label>tags:</label><input type="text" id="tags"/>
-                            <br/>
-                            <label>categories:</label>
-                            <input type="checkbox" name="category" value="robot">Robots</input>
-                            <input type="checkbox" name="category" value="institution">Institutions</input>
-                            <input type="checkbox" name="category" value="people">People</input>
-                        </form>
+                        <input type="hidden" id="event-type" value="transcript"/>    
+                    
+
+                        <div id="event-tabs">
+                             <ul>
+                                <li><a href="#comment-tab">Comment</a></li>
+                                <li><a href="#bookmark-tab">Bookmark</a></li>
+                                <li><a href="#transcript-tab">Transcript</a></li>
+                                <li><a href="#link-tab">Link</a></li>
+                            </ul>
+                            <div id="comment-tab">
+                                <!--
+                                <label>type:</label>
+                                <select id="event-type"/>
+                                    <option value="comment">comment</option>
+                                    <option value="comment">bookmark</option>
+                                    <option value="transcript">transcript</option>
+                                    <option value="link">link</option>
+                                </select>
+                                -->
+                                <label>comment:</label><br/>
+                                <textarea id="text-comments" class="tab-text"></textarea>                       
+                            </div>
+                            <div id="bookmark-tab">
+                                <label>bookmark note:</label><br/>
+                                <textarea id="text-bookmark" class="tab-text"></textarea>                       
+                            </div>
+                            <div id="transcript-tab">
+                                <label>transcript text:</label><br/>
+                                <textarea id="text-transcript" class="tab-text"></textarea>                       
+                            </div>
+                            <div id="link-tab">
+                                <label>input:</label><br/>
+                                <textarea id="text-link" class="tab-text"></textarea>                       
+                            </div>
+                        </div>
                         
                             
 
